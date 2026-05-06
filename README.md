@@ -317,6 +317,14 @@ python3 onnx/metric_3d_onnx_export.py metric3d_vit_small # metric3d_vit_large/me
 python3 onnx/test_onnx.py metric3d_vit_small.onnx
 ```
 
+### News: CoreML Exportation (with focal length input)
+We also provided a CoreML export example in [metric3d_coreml_export.py](./coreml/metric3d_coreml_export.py). The exported model takes two inputs: `image` (1x3xH xW) and `focal_length` (in pixels). The output depth is already scaled by `focal_length / 1000.0`, preserving the ability to specify the focal length at runtime. You can set a fixed input size at conversion time via `--input_height` and `--input_width`.
+
+```bash
+# Export the model to CoreML format (install coremltools first)
+python3 coreml/metric3d_coreml_export.py --model_name metric3d_vit_small --input_height 616 --input_width 1064 --output_path metric3d_vit_small.mlpackage
+```
+
 [ros2_vision_inference](https://github.com/Owen-Liuyuxuan/ros2_vision_inference) provides a Python example, showcasing a pipeline from image to point clouds and integrated into ROS2 systems.
 
 ### Download Checkpoint
