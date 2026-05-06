@@ -15,6 +15,20 @@ except ImportError:  # pragma: no cover - optional dependency
     np = None
 
 
+def _evaluate_mil_program(mlmodel, inputs):
+    program = mlmodel._get_mil_internal()
+    function = program.functions[program.default_function_name]
+    for name, value in inputs.items():
+        if name not in function.inputs:
+            raise KeyError(f"Input {name} not found in MIL program inputs.")
+        sym_val = function.inputs[name].sym_type()
+        sym_val.val = np.array(value)
+        function.inputs[name]._sym_val = sym_val
+    for op in function.operations:
+        op.type_value_inference(overwrite_output=True)
+    return {var.name: var.val for var in function.outputs}
+
+
 class DummyMetaArch(torch.nn.Module):
     def inference(self, inputs):
         image = inputs["input"]
@@ -37,10 +51,11 @@ class TestCoreMLExport(unittest.TestCase):
 
     @unittest.skipIf(ct is None, "coremltools not installed")
     @unittest.skipIf(np is None, "numpy not installed")
-    @unittest.skipIf(sys.platform != "darwin", "CoreML runtime requires macOS")
     def test_coreml_conversion_parity(self):
         torch.manual_seed(0)
-        model = Metric3DCoreMLExportModel(DummyMetaArch(), canonical_focal_length=1000.0)
+        model = Metric3DCoreMLExportModel(
+            DummyMetaArch(), canonical_focal_length=1000.0
+        ).eval()
         image = torch.randn(1, 3, 4, 6)
         focal_length = torch.tensor([1200.0])
 
@@ -58,9 +73,11 @@ class TestCoreMLExport(unittest.TestCase):
 
         mlmodel = ct.convert(traced, **convert_kwargs)
         torch_output = model(image, focal_length).detach().numpy()
-        coreml_output = mlmodel.predict(
-            {"image": image.numpy(), "focal_length": focal_length.numpy()}
-        )["pred_depth"]
+        coreml_inputs = {"image": image.numpy(), "focal_length": focal_length.numpy()}
+        if sys.platform == "darwin":
+            coreml_output = mlmodel.predict(coreml_inputs)["pred_depth"]
+        else:
+            coreml_output = _evaluate_mil_program(mlmodel, coreml_inputs)["pred_depth"]
 
         np.testing.assert_allclose(coreml_output, torch_output, rtol=1e-3, atol=1e-3)
 
