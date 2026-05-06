@@ -16,6 +16,12 @@ except ImportError:  # pragma: no cover - optional dependency
 
 
 def _evaluate_mil_program(mlmodel, inputs):
+    """Evaluate a converted MIL program on Linux where CoreML runtime isn't available.
+
+    This relies on MIL value_inference implementations, so it only works for
+    ops that support compile-time evaluation and is intended as a parity fallback
+    for non-macOS platforms.
+    """
     program = mlmodel._get_mil_internal()
     function = program.functions[program.default_function_name]
     for name, value in inputs.items():
