@@ -1,6 +1,6 @@
 """
 Export the torch hub model to CoreML format with focal length scaling.
-Normalization is done in the model.
+Normalization can be enabled in the export wrapper when desired.
 """
 
 from __future__ import annotations
@@ -141,6 +141,7 @@ def export_coreml(
     input_height: Optional[int] = None,
     input_width: Optional[int] = None,
     canonical_focal_length: float = 1000.0,
+    normalize_image: bool = True,
     output_path: Optional[str] = None,
 ):
     if ct is None:
@@ -162,7 +163,9 @@ def export_coreml(
     dummy_focal = torch.tensor([canonical_focal_length], dtype=torch.float32)
 
     export_model = Metric3DCoreMLExportModel(
-        model, canonical_focal_length=canonical_focal_length, normalize_image=True
+        model,
+        canonical_focal_length=canonical_focal_length,
+        normalize_image=normalize_image,
     )
     export_model.eval()
 
@@ -191,6 +194,7 @@ def main(
     input_height: Optional[int] = None,
     input_width: Optional[int] = None,
     canonical_focal_length: float = 1000.0,
+    normalize_image: bool = True,
     output_path: Optional[str] = None,
 ):
     return export_coreml(
@@ -199,6 +203,7 @@ def main(
         input_height=input_height,
         input_width=input_width,
         canonical_focal_length=canonical_focal_length,
+        normalize_image=normalize_image,
         output_path=output_path,
     )
 
