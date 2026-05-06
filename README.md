@@ -318,7 +318,7 @@ python3 onnx/test_onnx.py metric3d_vit_small.onnx
 ```
 
 ### News: CoreML Exportation (with focal length input)
-We also provided a CoreML export example in [metric3d_coreml_export.py](./coreml/metric3d_coreml_export.py). The exported model takes two inputs: `image` (1x3xH xW) and `focal_length` (in pixels). The output depth is already scaled by `focal_length / 1000.0`, preserving the ability to specify the focal length at runtime. You can set a fixed input size at conversion time via `--input_height` and `--input_width`.
+We also provided a CoreML export example in [metric3d_coreml_export.py](./coreml/metric3d_coreml_export.py). The exported model takes two inputs: `image` (1x3xH x W) and `focal_length` (in pixels). The output depth is already scaled by `focal_length / 1000.0`, preserving the ability to specify the focal length at runtime. You can set a fixed input size at conversion time via `--input_height` and `--input_width`.
 
 ```bash
 # Export the model to CoreML format (install coremltools first)

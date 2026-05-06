@@ -9,6 +9,16 @@ from typing import Optional, Tuple
 
 import torch
 
+try:
+    import coremltools as ct
+except ImportError:  # pragma: no cover - optional dependency
+    ct = None
+
+try:
+    from fire import Fire
+except ImportError:  # pragma: no cover - optional dependency
+    Fire = None
+
 
 class Metric3DCoreMLExportModel(torch.nn.Module):
     """
@@ -126,13 +136,11 @@ def export_coreml(
     canonical_focal_length: float = 1000.0,
     output_path: Optional[str] = None,
 ):
-    try:
-        import coremltools as ct
-    except ImportError as exc:
+    if ct is None:
         raise ImportError(
             "coremltools is required for CoreML export. "
             "Install it with `pip install coremltools`."
-        ) from exc
+        )
 
     model = torch.hub.load("yvanyin/metric3d", model_name, pretrain=True)
     model.eval()
@@ -189,6 +197,6 @@ def main(
 
 
 if __name__ == "__main__":
-    from fire import Fire
-
+    if Fire is None:
+        raise ImportError("fire is required to run this script. Install it with `pip install fire`.")
     Fire(main)
