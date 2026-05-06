@@ -22,10 +22,15 @@ except ImportError:  # pragma: no cover - optional dependency
 
 class Metric3DCoreMLExportModel(torch.nn.Module):
     """
-    The model for exporting to CoreML format. Includes normalization and focal scaling.
+    The model for exporting to CoreML format. Includes optional normalization and focal scaling.
     """
 
-    def __init__(self, meta_arch: torch.nn.Module, canonical_focal_length: float = 1000.0):
+    def __init__(
+        self,
+        meta_arch: torch.nn.Module,
+        canonical_focal_length: float = 1000.0,
+        normalize_image: bool = False,
+    ):
         super().__init__()
         self.meta_arch = meta_arch
         self.register_buffer(
@@ -35,6 +40,7 @@ class Metric3DCoreMLExportModel(torch.nn.Module):
             "rgb_std", torch.tensor([58.395, 57.12, 57.375]).view(1, 3, 1, 1)
         )
         self.canonical_focal_length = float(canonical_focal_length)
+        self.normalize_image = bool(normalize_image)
 
     def _normalize_image(self, image: torch.Tensor) -> torch.Tensor:
         return (image - self.rgb_mean) / self.rgb_std
@@ -57,7 +63,8 @@ class Metric3DCoreMLExportModel(torch.nn.Module):
         return scale
 
     def forward(self, image: torch.Tensor, focal_length: torch.Tensor) -> torch.Tensor:
-        image = self._normalize_image(image)
+        if self.normalize_image:
+            image = self._normalize_image(image)
         with torch.no_grad():
             pred_depth, _, _ = self.meta_arch.inference({"input": image})
         scale = focal_length / self.canonical_focal_length
@@ -155,7 +162,7 @@ def export_coreml(
     dummy_focal = torch.tensor([canonical_focal_length], dtype=torch.float32)
 
     export_model = Metric3DCoreMLExportModel(
-        model, canonical_focal_length=canonical_focal_length
+        model, canonical_focal_length=canonical_focal_length, normalize_image=True
     )
     export_model.eval()
 
